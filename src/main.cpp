@@ -38,22 +38,40 @@ using namespace Eigen;
 
 vector<string> filenames;
 
-// Vertices
+//----------------------------------
+// VERTICES
+//----------------------------------
 VertexBufferObject VBO;
 MatrixXf V(3,63709);
 
-// Texture
+//----------------------------------
+// NORMALS
+//----------------------------------
+VertexBufferObject VBO_N;
+MatrixXf N(3,63709);
+//----------------------------------
+// TEXTURE
+//----------------------------------
 VertexBufferObject VBO_T;
-MatrixXf T(2,3);
+MatrixXf T(2,63709);
 
+//----------------------------------
+// MODEL MATRIX
+//----------------------------------
+MatrixXf model(4,4);
+
+//----------------------------------
+// VIEW/CAMERA MATRIX
+//----------------------------------
 MatrixXf view(4,4);
-float focal_length = 1;
+float focal_length = 4.4;
 Vector3f eye(-1.0, 0.0, focal_length); //camera position/ eye position  //e
 Vector3f look_at(0.0, 0.0, 0.0); //target point, where we want to look //g
 Vector3f up_vec(0.0, 1.0, 0.0); //up vector //t
 
+Vector3f lightPos(1.0, 0.0, -1.0);
 //----------------------------------
-// PERSPECTIVE PROJECTION PARAMETERS
+// PERSPECTIVE PROJECTION MATRIX
 //----------------------------------
 MatrixXf projection(4,4);
 MatrixXf perspective(4,4);
@@ -72,9 +90,13 @@ float b;
 float aspect;
 
 
-vector< Vector3f > out_vertices;
-vector< Vector2f > out_uvs;
-vector< Vector3f > out_normals;
+vector< Vector3f > dna_out_vertices;
+vector< Vector2f > dna_out_uvs;
+vector< Vector3f > dna_out_normals;
+
+vector< Vector3f > rose_out_vertices;
+vector< Vector2f > rose_out_uvs;
+vector< Vector3f > rose_out_normals;
 
 vector<float> split_face_line(string line, int startIdx)
 {
@@ -113,7 +135,7 @@ vector<float> split_line(string line, int startIdx)
   }
   return data;
 }
-void readObjFile(string filename)
+void readObjFile(string filename, bool rose)
 {
   // Data holders
   vector< unsigned int > vertexIndices, uvIndices, normalIndices;
@@ -164,16 +186,23 @@ void readObjFile(string filename)
   for(int i = 0; i < vertexIndices.size(); i++)
   {
     int vertexIndex = vertexIndices[i] - 1;
-    Vector3f vertex = temp_vertices[vertexIndex];
-    out_vertices.push_back(vertex);
-
     int uvIndex = uvIndices[i] - 1;
-    Vector2f uv = temp_uvs[uvIndex];
-    out_uvs.push_back(uv);
-
     int normalIndex = normalIndices[i] - 1;
+
+    Vector3f vertex = temp_vertices[vertexIndex];
+    Vector2f uv = temp_uvs[uvIndex];
     Vector3f normal = temp_normals[normalIndex];
-    out_normals.push_back(normal);
+
+    if(rose){
+      rose_out_vertices.push_back(vertex);
+      rose_out_uvs.push_back(uv);
+      rose_out_normals.push_back(normal);
+    }else{
+      dna_out_vertices.push_back(vertex);
+      dna_out_uvs.push_back(uv);
+      dna_out_normals.push_back(normal);
+    }
+
   }
   cout << "Temp vertices size: " << temp_vertices.size() << endl;
 
@@ -187,39 +216,45 @@ void initialize(GLFWwindow* window)
   // READ IN OBJ FILES
   cout << "Reading OBJ files" << endl;
   filenames.push_back("../data/dna_obj/dna.obj");
-  readObjFile(filenames[0]);
-  cout << "Vertex size: " << out_vertices.size() << endl;
-  cout << "Individual vertex size: " << out_vertices[0] << endl;
-  // filenames.push_back("../data/rose_obj/rose.obj");
-  // readObjFile(filenames[1]);
+  readObjFile(filenames[0], false);
 
-  // READ IN VERTICES
+  // READ IN PARSED DATA
   VBO.init();
-  for(int i = 0; i < out_vertices.size(); i++)
+  VBO_N.init();
+  VBO_T.init();
+  for(int i = 0; i < dna_out_vertices.size(); i++)
   {
-    Vector3f data = out_vertices[i];
-    V.col(i) << data[0], data[1], data[2];
+    Vector3f v_data = dna_out_vertices[i];
+    Vector3f n_data = dna_out_normals[i];
+    Vector2f t_data = dna_out_uvs[i];
+    V.col(i) << v_data[0], v_data[1], v_data[2];
+    N.col(i) << n_data[0], n_data[1], n_data[2];
+    T.col(i) << t_data[0], t_data[1];
   }
   VBO.update(V);
-
-
-  // VBO_T.init();
-  // int start = 0;
-  // V.col(start) << 0.5f, 0.5f, 0.0f;
-  // V.col(start + 1) <<   0.5, -0.5, 0.5;
-  // V.col(start + 2) <<   -0.5,-0.5, 0.0;
-  // VBO.update(V);
-  // for(int i = 0; i < out_vertices.size(); i++){
-  //   // V.col(i)
-  // }
-
-  // // READ IN TEXTURE INDICES
-  // T.col(start) << 1.0, 1.0;
-  // T.col(start + 1) <<  1.0, 0.0;
-  // T.col(start + 2) <<   0.0, 0.0;
-  // VBO_T.update(T);
+  VBO_N.update(N);
+  VBO_T.update(T);
 
   // READ IN NORMALS
+  //------------------------------------------
+  // MODEL MATRIX
+  //------------------------------------------
+  model <<
+  1.0, 0.0, 0.0, 0.0,
+  0.0, 1.0, 0.0, 0.0,
+  0.0, 0.0, 1.0, 0.0,
+  0.0, 0.0, 0.0, 1.0;
+
+  float direction = (PI/180) * 90;
+  MatrixXf rotation(4,4);
+  rotation <<
+  1.,    0.,                  0.,                 0.,
+  0.,    cos(direction),   sin(direction),  0.,
+  0.,    -sin(direction),  cos(direction),  0.,
+  0.,    0.,                  0.,                 1.;
+
+  model = model * rotation;
+
   //------------------------------------------
   // VIEW/CAMERA MATRIX
   //------------------------------------------
@@ -242,29 +277,113 @@ void initialize(GLFWwindow* window)
   0.0, 0.0, 0.0, 0.5;
 
   view = look * at;
+
   //------------------------------------------
-    // PROJECTION MATRIX
-    //------------------------------------------
-    // Get the size of the window
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    aspect = width/height;
+  // PROJECTION MATRIX
+  //------------------------------------------
+  // Get the size of the window
+  int width, height;
+  glfwGetWindowSize(window, &width, &height);
+  aspect = width/height;
 
-    t = tan(theta/2) * abs(n);
-    b = -t;
+  t = tan(theta/2) * abs(n);
+  b = -t;
 
-    r = aspect * t;
-    l = -r;
+  r = aspect * t;
+  l = -r;
 
-    perspective <<
-    2*abs(n)/(r-l), 0., (r+l)/(r-l), 0.,
-    0., (2 * abs(n))/(t-b), (t+b)/(t-b), 0.,
-    0., 0.,  (abs(f) + abs(n))/(abs(n) - abs(f)), (2 * abs(f) * abs(n))/(abs(n) - abs(f)),
-    0., 0., -1., 0;
+  perspective <<
+  2*abs(n)/(r-l), 0., (r+l)/(r-l), 0.,
+  0., (2 * abs(n))/(t-b), (t+b)/(t-b), 0.,
+  0., 0.,  (abs(f) + abs(n))/(abs(n) - abs(f)), (2 * abs(f) * abs(n))/(abs(n) - abs(f)),
+  0., 0., -1., 0;
 
-    projection = perspective;
+  projection = perspective;
 
 
+}
+
+void changeView(int direction)
+{
+  float factor = 0.3;
+
+  if(direction == 0){
+    cout << "Moving eye to the left" << endl;
+    eye[0] -= factor;
+  }else if(direction == 1){
+    cout << "Moving eye to the right" << endl;
+    eye[0] += factor;
+  }else if(direction == 2){
+    cout << "Moving eye up" << endl;
+    eye[1] += factor;
+  }else if(direction == 3){
+    cout << "Moving eye down" << endl;
+    eye[1] -= factor;
+  }else if(direction == 4){
+    cout << "Moving eye in" << endl;
+    eye[2] -= factor;
+  }else if(direction == 5){
+    cout << "Moving eye out" << endl;
+    eye[2] += factor;
+  }
+  Vector3f w = (eye - look_at).normalized();
+  Vector3f u = (up_vec.cross(w).normalized());
+  Vector3f v = w.cross(u);
+
+  Matrix4f look;
+  look <<
+  u[0], u[1], u[2], 0.,
+  v[0], v[1], v[2], 0.,
+  w[0], w[1], w[2], 0.,
+  0.,   0.,    0.,  0.5;
+
+  Matrix4f at;
+  at <<
+  0.5, 0.0, 0.0, -eye[0],
+  0.0, 0.5, 0.0, -eye[1],
+  0.0, 0.0, 0.5, -eye[2],
+  0.0, 0.0, 0.0, 0.5;
+
+  view = look * at;
+
+}
+
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+  if(action == GLFW_RELEASE){
+    switch(key){
+      case GLFW_KEY_LEFT:{
+        cout << "Moving LEFT" << endl;
+        changeView(0);
+        break;
+      }
+      case GLFW_KEY_RIGHT:{
+        cout << "Moving RIGHT" << endl;
+        changeView(1);
+        break;
+      }
+      case GLFW_KEY_UP:{
+        cout << "Moving UP" << endl;
+        changeView(2);
+        break;
+      }
+      case GLFW_KEY_DOWN:{
+        cout << "Moving DOWN" << endl;
+        changeView(3);
+        break;
+      }
+      case GLFW_KEY_EQUAL:{
+        cout << "Moving IN" << endl;
+        changeView(4);
+        break;
+      }
+      case GLFW_KEY_MINUS:{
+        cout << "Moving OUT" << endl;
+        changeView(5);
+        break;
+      }
+    }
+  }
 }
 int main(void)
 {
@@ -325,25 +444,52 @@ int main(void)
     const GLchar* vertex_shader =
             "#version 150 core\n"
                     "in vec3 position;" //vertex position
-                    // "in vec2 aTexCoord;"
-                    // "out vec2 TexCoord;"
+                    "in vec3 normal;"
+                    "in vec2 texCoord;"
+                    "out vec2 TexCoord;"
+                    "out vec3 Normal;"
+                    "out vec3 FragPos;"
                     "uniform mat4 view;"
                     "uniform mat4 projection;"
+                    "uniform mat4 model;"
                     "void main()"
                     "{"
-                    "    gl_Position = projection * view * vec4(position, 1.0);"
-                    // "     TexCoord = aTexCoord;"
+                    "    gl_Position = projection * view * model * vec4(position, 1.0);"
+                    "    FragPos = vec3(model * vec4(position, 1.0f));"
+                    "     Normal = mat3(transpose(inverse(model))) * normal;"
+                    "     TexCoord = texCoord;"
                     "}";
     const GLchar* fragment_shader =
             "#version 150 core\n"
-                    // "in vec2 TexCoord;"
                     "out vec4 outColor;"
-                    // "uniform sampler2D ourTexture;"
+                    "in vec2 TexCoord;"
+                    "in vec3 Normal;"
+                    "in vec3 FragPos;"
+                    "uniform vec3 lightPos;"
+                    "uniform vec3 viewPos;"
+                    "uniform vec3 objectColor;"
+                    "uniform sampler2D ourTexture;"
                     "void main()"
                     "{"
-                        // "outColor = texture(ourTexture, TexCoord);"
-                    "    outColor = vec4(0.0, 0.0, 0.0, 0.0);"
-                    "}";
+                    "    vec3 lightColor = vec3(1.0, 1.0, 1.0);"
+                        // Ambient
+                  "      float ambientStrength = 0.01f;"
+                  "      vec3 ambient = ambientStrength * lightColor;"
+
+                        // Diffuse
+                  "      vec3 norm = normalize(Normal);"
+                  "      vec3 lightDir = normalize(lightPos - FragPos);"
+                  "      float diff = max(dot(norm, lightDir), 0.0);"
+                  "      vec3 diffuse = diff * lightColor;"
+                            // Specular
+                  "      float specularStrength = 0.1f;"
+                  "      vec3 viewDir = normalize(viewPos - FragPos);"
+                  "      vec3 reflectDir = reflect(-lightDir, norm);  "
+                  "      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
+                  "      vec3 specular = specularStrength * spec * lightColor;  "
+                  "      vec3 result = (ambient + diffuse + specular) * objectColor;"
+                  "        outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
+                  "}";
 
     // INITIALIZE EVERYTHING
     initialize(window);
@@ -358,44 +504,59 @@ int main(void)
     // The following line connects the VBO we defined above with the position "slot"
     // in the vertex shader
     program.bindVertexAttribArray("position",VBO);
-    // program.bindVertexAttribArray("aTexCoord",VBO_T);
+    program.bindVertexAttribArray("normal",VBO_N);
+    program.bindVertexAttribArray("texCoord",VBO_T);
+
+    // UNIFORMS
+    glUniform3f(program.uniform("lightPos"), lightPos[0] ,lightPos[1], lightPos[2]);
+    glUniform3f(program.uniform("viewPos"), eye[0], eye[1], eye[2]);
+    glUniform3f(program.uniform("objectColor"), 0.364304, 0.534819, 0.863924);
     glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, view.data());
     glUniformMatrix4fv(program.uniform("projection"), 1, GL_FALSE, projection.data());
+    glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.data());
     // Save the current time --- it will be used to dynamically change the triangle color
     auto t_start = std::chrono::high_resolution_clock::now();
 
+    // -------------------------
+    // LOAD DNA TEXTURE
+    // -------------------------
+    unsigned int texture1, texture2;
+    // texture 1
+    // ---------
+    glGenTextures(1, &texture1);
+    glBindTexture(GL_TEXTURE_2D, texture1);
+    // set the texture wrapping parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // set texture filtering parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    // // load and create a texture
-    //  // -------------------------
-    //  unsigned int texture1, texture2;
-    //  // texture 1
-    //  // ---------
-    //  glGenTextures(1, &texture1);
-    //  glBindTexture(GL_TEXTURE_2D, texture1);
-    //   // set the texture wrapping parameters
-    //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
-    //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    //  // set texture filtering parameters
-    //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    //  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    //
-    //  // load image, create texture and generate mipmaps
-    //  int width, height, nrChannels;
-    //  stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
-    //  // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    //  unsigned char *data = stbi_load("../data/noisewood3.jpg", &width, &height, &nrChannels, 0);
-    //  if (data)
-    //  {
-    //      glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-    //      glGenerateMipmap(GL_TEXTURE_2D);
-    //  }
-    //  else
-    //  {
-    //      std::cout << "Failed to load texture" << std::endl;
-    //  }
-    //  stbi_image_free(data);
-    //  cout << "Setting texture uniform" << endl;
-    //  glUniform1i(program.uniform("ourTexture"), 0);
+    // load image, create texture and generate mipmaps
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    unsigned char *data = stbi_load("../data/dna_obj/Bump.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+       glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+       std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    cout << "Setting DNA texture uniform" << endl;
+    glUniform1i(program.uniform("ourTexture"), 0);
+
+
+    // -------------------------
+    // LOAD ROSE TEXTURE
+    // -------------------------
+
+    // Register the keyboard callback
+    glfwSetKeyCallback(window, key_callback);
 
 
     // Loop until the user closes the window
@@ -406,12 +567,14 @@ int main(void)
       // ------
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT);
-
+      glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, view.data());
       // bind textures on corresponding texture units
-      // glActiveTexture(GL_TEXTURE0);
-      // glBindTexture(GL_TEXTURE_2D, texture1);
-      glDrawArrays(GL_LINES, 0, out_vertices.size() );      // Clear the framebuffer
-
+      glActiveTexture(GL_TEXTURE0);
+      glBindTexture(GL_TEXTURE_2D, texture1);
+      // for(int i = 0; i < dna_out_vertices.size(); i+=3){
+      //   glDrawArrays(GL_LINE_LOOP, i , 3);
+      // }
+      glDrawArrays(GL_LINE_LOOP, 0,dna_out_vertices.size() );
       // Swap front and back buffers
       glfwSwapBuffers(window);
 
