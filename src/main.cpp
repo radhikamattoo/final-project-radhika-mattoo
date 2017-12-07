@@ -42,34 +42,38 @@ vector<string> filenames;
 // VERTICES
 //----------------------------------
 VertexBufferObject VBO;
-MatrixXf V(3,63709);
+int DNA_VERTICES = 95397;
+int ROSE_VERTICES = 95397;
+int TOTAL = DNA_VERTICES + ROSE_VERTICES;
+// int TOTAL = ROSE_VERTICES;
+MatrixXf V(3,TOTAL);
 
 //----------------------------------
 // NORMALS
 //----------------------------------
 VertexBufferObject VBO_N;
-MatrixXf N(3,63709);
+MatrixXf N(3,TOTAL);
 //----------------------------------
 // TEXTURE
 //----------------------------------
 VertexBufferObject VBO_T;
-MatrixXf T(2,63709);
+MatrixXf T(2,TOTAL);
 
 //----------------------------------
 // MODEL MATRIX
 //----------------------------------
-MatrixXf model(4,4);
+MatrixXf model(4,8);
 
 //----------------------------------
 // VIEW/CAMERA MATRIX
 //----------------------------------
 MatrixXf view(4,4);
 float focal_length = 4.4;
-Vector3f eye(-1.0, 0.0, focal_length); //camera position/ eye position  //e
+Vector3f eye(0.0, 0.0, focal_length); //camera position/ eye position  //e
 Vector3f look_at(0.0, 0.0, 0.0); //target point, where we want to look //g
 Vector3f up_vec(0.0, 1.0, 0.0); //up vector //t
 
-Vector3f lightPos(1.0, 0.0, -1.0);
+Vector3f lightPos(-1.0, 1.0, 1.0);
 //----------------------------------
 // PERSPECTIVE PROJECTION MATRIX
 //----------------------------------
@@ -137,6 +141,7 @@ vector<float> split_line(string line, int startIdx)
 }
 void readObjFile(string filename, bool rose)
 {
+  cout << "Reading OBJ file: " << filename << endl;
   // Data holders
   vector< unsigned int > vertexIndices, uvIndices, normalIndices;
   vector< Vector3f > temp_vertices;
@@ -164,9 +169,11 @@ void readObjFile(string filename, bool rose)
         vector<float> values = split_line(line, 3);
         Vector3f normal(values[0], values[1], values[2]);
         temp_normals.push_back(normal);
+
       }else{ //VERTEX
         vector<float> values = split_line(line, 2);
         Vector3f vertex(values[0], values[1], values[2]);
+
         temp_vertices.push_back(vertex);
       }
     }else if(line[0] == 'f'){ //FACE
@@ -192,7 +199,6 @@ void readObjFile(string filename, bool rose)
     Vector3f vertex = temp_vertices[vertexIndex];
     Vector2f uv = temp_uvs[uvIndex];
     Vector3f normal = temp_normals[normalIndex];
-
     if(rose){
       rose_out_vertices.push_back(vertex);
       rose_out_uvs.push_back(uv);
@@ -202,9 +208,7 @@ void readObjFile(string filename, bool rose)
       dna_out_uvs.push_back(uv);
       dna_out_normals.push_back(normal);
     }
-
   }
-  cout << "Temp vertices size: " << temp_vertices.size() << endl;
 
 }
 void initialize(GLFWwindow* window)
@@ -212,25 +216,49 @@ void initialize(GLFWwindow* window)
   VertexArrayObject VAO;
   VAO.init();
   VAO.bind();
-
-  // READ IN OBJ FILES
-  cout << "Reading OBJ files" << endl;
-  filenames.push_back("../data/dna_obj/dna.obj");
-  readObjFile(filenames[0], false);
-
   // READ IN PARSED DATA
   VBO.init();
   VBO_N.init();
   VBO_T.init();
-  for(int i = 0; i < dna_out_vertices.size(); i++)
+
+  // READ IN OBJ FILES
+  filenames.push_back("../data/dna_obj/DNA.obj");
+  filenames.push_back("../data/rose_obj/Rose.obj");
+  readObjFile(filenames[0], false);
+  readObjFile(filenames[1], true);
+
+  // cout << "DNA vertices: " << dna_out_vertices.size() << endl;
+  // cout << "DNA normals: " << dna_out_normals.size() << endl;
+  // cout << "DNA textures: " << dna_out_uvs.size() << endl;
+  // for(int i = 0; i < dna_out_vertices.size(); i++)
+  // {
+  //   Vector3f v_data = dna_out_vertices[i];
+  //   Vector3f n_data = dna_out_normals[i];
+  //   Vector2f t_data = dna_out_uvs[i];
+  //   V.col(i) << v_data[0], v_data[1], v_data[2];
+  //   N.col(i) << n_data[0], n_data[1], n_data[2];
+  //   T.col(i) << t_data[0], t_data[1];
+  // }
+  // int start = dna_out_vertices.size();
+  int start = 0;
+  cout << "Rose vertices: " << rose_out_vertices.size() << endl;
+  cout << "Rose normals: " << rose_out_normals.size() << endl;
+  cout << "Rose textures: " << rose_out_uvs.size() << endl;
+  for(int i = start; i < (start + rose_out_vertices.size()); i++)
   {
-    Vector3f v_data = dna_out_vertices[i];
-    Vector3f n_data = dna_out_normals[i];
-    Vector2f t_data = dna_out_uvs[i];
+    Vector3f v_data = rose_out_vertices[i];
+    Vector3f n_data = rose_out_normals[i];
+    Vector2f t_data = rose_out_uvs[i];
+    v_data[1] -= 40;
+    v_data /= 10;
     V.col(i) << v_data[0], v_data[1], v_data[2];
     N.col(i) << n_data[0], n_data[1], n_data[2];
     T.col(i) << t_data[0], t_data[1];
   }
+
+  // cout << "size of vertices: " << (rose_out_vertices.size() +dna_out_vertices.size() )<< endl;
+  // cout << "size of normals: " << (rose_out_normals.size() + dna_out_normals.size()) << endl;
+  // cout << "size of textures: " << (rose_out_uvs.size() + dna_out_uvs.size()) << endl;
   VBO.update(V);
   VBO_N.update(N);
   VBO_T.update(T);
@@ -240,10 +268,11 @@ void initialize(GLFWwindow* window)
   // MODEL MATRIX
   //------------------------------------------
   model <<
-  1.0, 0.0, 0.0, 0.0,
-  0.0, 1.0, 0.0, 0.0,
-  0.0, 0.0, 1.0, 0.0,
-  0.0, 0.0, 0.0, 1.0;
+  1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0,
+  0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
+  0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
+  0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
+
 
   float direction = (PI/180) * 90;
   MatrixXf rotation(4,4);
@@ -253,7 +282,7 @@ void initialize(GLFWwindow* window)
   0.,    -sin(direction),  cos(direction),  0.,
   0.,    0.,                  0.,                 1.;
 
-  model = model * rotation;
+  model.block(0,0,4,4) = model.block(0,0,4,4) * rotation;
 
   //------------------------------------------
   // VIEW/CAMERA MATRIX
@@ -456,8 +485,8 @@ int main(void)
                     "{"
                     "    gl_Position = projection * view * model * vec4(position, 1.0);"
                     "    FragPos = vec3(model * vec4(position, 1.0f));"
-                    "     Normal = mat3(transpose(inverse(model))) * normal;"
-                    "     TexCoord = texCoord;"
+                    "    Normal = mat3(transpose(inverse(model))) * normal;"
+                    "    TexCoord = texCoord;"
                     "}";
     const GLchar* fragment_shader =
             "#version 150 core\n"
@@ -469,26 +498,17 @@ int main(void)
                     "uniform vec3 viewPos;"
                     "uniform vec3 objectColor;"
                     "uniform sampler2D ourTexture;"
+                    "uniform bool is_rose;"
                     "void main()"
                     "{"
-                    "    vec3 lightColor = vec3(1.0, 1.0, 1.0);"
-                        // Ambient
-                  "      float ambientStrength = 0.01f;"
-                  "      vec3 ambient = ambientStrength * lightColor;"
+                          //ROSE
+                  "       if(is_rose){"
+                  "         outColor =  texture(ourTexture, TexCoord) ;"
+                          //DNA
+                  "       }else{"
+                  "           outColor =  texture(ourTexture, TexCoord);"
+                  "       }"
 
-                        // Diffuse
-                  "      vec3 norm = normalize(Normal);"
-                  "      vec3 lightDir = normalize(lightPos - FragPos);"
-                  "      float diff = max(dot(norm, lightDir), 0.0);"
-                  "      vec3 diffuse = diff * lightColor;"
-                            // Specular
-                  "      float specularStrength = 0.1f;"
-                  "      vec3 viewDir = normalize(viewPos - FragPos);"
-                  "      vec3 reflectDir = reflect(-lightDir, norm);  "
-                  "      float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
-                  "      vec3 specular = specularStrength * spec * lightColor;  "
-                  "      vec3 result = (ambient + diffuse + specular) * objectColor;"
-                  "        outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
                   "}";
 
     // INITIALIZE EVERYTHING
@@ -510,19 +530,21 @@ int main(void)
     // UNIFORMS
     glUniform3f(program.uniform("lightPos"), lightPos[0] ,lightPos[1], lightPos[2]);
     glUniform3f(program.uniform("viewPos"), eye[0], eye[1], eye[2]);
-    glUniform3f(program.uniform("objectColor"), 0.364304, 0.534819, 0.863924);
     glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, view.data());
     glUniformMatrix4fv(program.uniform("projection"), 1, GL_FALSE, projection.data());
-    glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.data());
+
+
     // Save the current time --- it will be used to dynamically change the triangle color
     auto t_start = std::chrono::high_resolution_clock::now();
 
+
+    unsigned int texture1, texture2;
     // -------------------------
     // LOAD DNA TEXTURE
     // -------------------------
-    unsigned int texture1, texture2;
     // texture 1
     // ---------
+    cout << "Loading DNA texture" << endl;
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1);
     // set the texture wrapping parameters
@@ -536,7 +558,7 @@ int main(void)
     int width, height, nrChannels;
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    unsigned char *data = stbi_load("../data/dna_obj/Bump.jpg", &width, &height, &nrChannels, 0);
+    unsigned char *data = stbi_load("../data/dna_obj/dna_texture.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -547,13 +569,41 @@ int main(void)
        std::cout << "Failed to load texture" << std::endl;
     }
     stbi_image_free(data);
-    cout << "Setting DNA texture uniform" << endl;
-    glUniform1i(program.uniform("ourTexture"), 0);
-
+    glBindTexture(GL_TEXTURE_2D, 0);
 
     // -------------------------
     // LOAD ROSE TEXTURE
     // -------------------------
+    // texture 2
+    // ---------
+    cout << "Loading Rose texture" << endl;
+    glGenTextures(1, &texture2);
+    glBindTexture(GL_TEXTURE_2D, texture2);
+    // Set our texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    width = 0;
+    height = 0;
+    nrChannels = 0;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+    // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+    data = stbi_load("../data/rose_obj/rose_texture.jpg", &width, &height, &nrChannels, 0);
+    if (data)
+    {
+       glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+       glGenerateMipmap(GL_TEXTURE_2D);
+    }
+    else
+    {
+       std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
+    glBindTexture(GL_TEXTURE_2D, 1);
+
 
     // Register the keyboard callback
     glfwSetKeyCallback(window, key_callback);
@@ -565,16 +615,40 @@ int main(void)
       // Bind your program
       program.bind();
       // ------
+      glEnable(GL_DEPTH_TEST);
+      glDepthFunc(GL_LESS);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-      glClear(GL_COLOR_BUFFER_BIT);
+      glClear(GL_COLOR_BUFFER_BIT| GL_DEPTH_BUFFER_BIT);
       glUniformMatrix4fv(program.uniform("view"), 1, GL_FALSE, view.data());
+      //--------
+      // DNA
+      //--------
       // bind textures on corresponding texture units
-      glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture1);
+      // glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.block(0,0,4,4).data());
+      // glUniform3f(program.uniform("objectColor"), 0.364304, 0.534819, 0.863924);
+      // glUniform1i(program.uniform("is_rose"), false);
+      // glUniform1i(program.uniform("ourTexture"), 0);
+      // glActiveTexture(GL_TEXTURE0);
+      // glBindTexture(GL_TEXTURE_2D, texture1);
       // for(int i = 0; i < dna_out_vertices.size(); i+=3){
-      //   glDrawArrays(GL_LINE_LOOP, i , 3);
+      //   glDrawArrays(GL_TRIANGLES, i , 3);
       // }
-      glDrawArrays(GL_LINE_LOOP, 0,dna_out_vertices.size() );
+
+      //--------
+      // ROSE
+      //--------
+      glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.block(0,4,4,4).data());
+      glUniform3f(program.uniform("objectColor"), 0.784314, 0.784314, 0.784314);
+      glUniform1i(program.uniform("is_rose"), true);
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(GL_TEXTURE_2D, texture2);
+      glUniform1i(program.uniform("ourTexture"), 1);
+      // int start = dna_out_vertices.size();
+      int start = 0;
+      for(int i = start; i <( start + rose_out_vertices.size()); i+=3){
+          glDrawArrays(GL_TRIANGLES, i , 3);
+      }
       // Swap front and back buffers
       glfwSwapBuffers(window);
 

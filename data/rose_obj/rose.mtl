@@ -1,12 +1,13 @@
-newmtl rose1
-Kd 0.784314 0.784314 0.784314
-Ke 0 0 0
-Ka 1 1 1
-Ks 0 0 0
-Ns 400
-Tr 0
-d 1
-Ni 1
-Tf 1 1 1
-map_Kd Final Product Files/rose_texture.jpg
+# Blender MTL File: 'None'
+# Material Count: 2
 
+newmtl rose1
+Ns 400.000000  #specular exponent
+Ka 1.000000 1.000000 1.000000 #ambient light
+Kd 0.784314 0.784314 0.784314 #diffuse light
+Ks 0.000000 0.000000 0.000000 #specular light
+Ke 0.000000 0.000000 0.000000 #emissive
+Ni 1.000000 #optical density
+d 1.000000 #opaque
+illum 2 #highlight on
+map_Kd School/Graduate/Computer Graphics/homework/final/final-project-radhika-mattoo/data/rose_obj/rose_texture.jpg
