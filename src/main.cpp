@@ -43,8 +43,8 @@ vector<string> filenames;
 //----------------------------------
 VertexBufferObject VBO;
 int DNA_VERTICES = 95397;
-int ROSE_VERTICES = 95397;
-int TOTAL = DNA_VERTICES + ROSE_VERTICES;
+int CAT_VERTICES = 12000;
+int TOTAL = DNA_VERTICES + CAT_VERTICES;
 // int TOTAL = ROSE_VERTICES;
 MatrixXf V(3,TOTAL);
 
@@ -73,7 +73,7 @@ Vector3f eye(0.0, 0.0, focal_length); //camera position/ eye position  //e
 Vector3f look_at(0.0, 0.0, 0.0); //target point, where we want to look //g
 Vector3f up_vec(0.0, 1.0, 0.0); //up vector //t
 
-Vector3f lightPos(-1.0, 1.0, 1.0);
+Vector3f lightPos(3.0, 1.0, 3.0);
 //----------------------------------
 // PERSPECTIVE PROJECTION MATRIX
 //----------------------------------
@@ -98,9 +98,9 @@ vector< Vector3f > dna_out_vertices;
 vector< Vector2f > dna_out_uvs;
 vector< Vector3f > dna_out_normals;
 
-vector< Vector3f > rose_out_vertices;
-vector< Vector2f > rose_out_uvs;
-vector< Vector3f > rose_out_normals;
+vector< Vector3f > cat_out_vertices;
+vector< Vector2f > cat_out_uvs;
+vector< Vector3f > cat_out_normals;
 
 vector<float> split_face_line(string line, int startIdx)
 {
@@ -139,7 +139,7 @@ vector<float> split_line(string line, int startIdx)
   }
   return data;
 }
-void readObjFile(string filename, bool rose)
+void readObjFile(string filename, bool cat)
 {
   cout << "Reading OBJ file: " << filename << endl;
   // Data holders
@@ -199,10 +199,10 @@ void readObjFile(string filename, bool rose)
     Vector3f vertex = temp_vertices[vertexIndex];
     Vector2f uv = temp_uvs[uvIndex];
     Vector3f normal = temp_normals[normalIndex];
-    if(rose){
-      rose_out_vertices.push_back(vertex);
-      rose_out_uvs.push_back(uv);
-      rose_out_normals.push_back(normal);
+    if(cat){
+      cat_out_vertices.push_back(vertex);
+      cat_out_uvs.push_back(uv);
+      cat_out_normals.push_back(normal);
     }else{
       dna_out_vertices.push_back(vertex);
       dna_out_uvs.push_back(uv);
@@ -223,10 +223,10 @@ void initialize(GLFWwindow* window)
 
   // READ IN OBJ FILES
   filenames.push_back("../data/dna_obj/DNA.obj");
-  filenames.push_back("../data/rose_obj/Rose.obj");
+  filenames.push_back("../data/cat_obj/Cat.obj");
   readObjFile(filenames[0], false);
   readObjFile(filenames[1], true);
-
+  //
   // cout << "DNA vertices: " << dna_out_vertices.size() << endl;
   // cout << "DNA normals: " << dna_out_normals.size() << endl;
   // cout << "DNA textures: " << dna_out_uvs.size() << endl;
@@ -240,25 +240,21 @@ void initialize(GLFWwindow* window)
   //   T.col(i) << t_data[0], t_data[1];
   // }
   // int start = dna_out_vertices.size();
-  int start = 0;
-  cout << "Rose vertices: " << rose_out_vertices.size() << endl;
-  cout << "Rose normals: " << rose_out_normals.size() << endl;
-  cout << "Rose textures: " << rose_out_uvs.size() << endl;
-  for(int i = start; i < (start + rose_out_vertices.size()); i++)
-  {
-    Vector3f v_data = rose_out_vertices[i];
-    Vector3f n_data = rose_out_normals[i];
-    Vector2f t_data = rose_out_uvs[i];
-    v_data[1] -= 40;
-    v_data /= 10;
-    V.col(i) << v_data[0], v_data[1], v_data[2];
-    N.col(i) << n_data[0], n_data[1], n_data[2];
-    T.col(i) << t_data[0], t_data[1];
-  }
+  // int start = 0;
+  // cout << "Cat vertices: " << cat_out_vertices.size() << endl;
+  // cout << "Cat normals: " << cat_out_normals.size() << endl;
+  // cout << "Cat textures: " << cat_out_uvs.size() << endl;
+  // for(int i = start; i < (start + cat_out_vertices.size()); i++)
+  // {
+  //   Vector3f v_data = cat_out_vertices[i];
+  //   Vector3f n_data = cat_out_normals[i];
+  //   Vector2f t_data = cat_out_uvs[i];
+  //   v_data /= 100;
+  //   V.col(i) << v_data[0], v_data[1], v_data[2];
+  //   N.col(i) << n_data[0], n_data[1], n_data[2];
+  //   T.col(i) << t_data[0], t_data[1];
+  // }
 
-  // cout << "size of vertices: " << (rose_out_vertices.size() +dna_out_vertices.size() )<< endl;
-  // cout << "size of normals: " << (rose_out_normals.size() + dna_out_normals.size()) << endl;
-  // cout << "size of textures: " << (rose_out_uvs.size() + dna_out_uvs.size()) << endl;
   VBO.update(V);
   VBO_N.update(N);
   VBO_T.update(T);
@@ -273,7 +269,7 @@ void initialize(GLFWwindow* window)
   0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0,
   0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0;
 
-
+  // DNA
   float direction = (PI/180) * 90;
   MatrixXf rotation(4,4);
   rotation <<
@@ -283,6 +279,24 @@ void initialize(GLFWwindow* window)
   0.,    0.,                  0.,                 1.;
 
   model.block(0,0,4,4) = model.block(0,0,4,4) * rotation;
+
+
+  // CAT
+  rotation <<
+  cos(direction),  0.,  -sin(direction),   0.,
+  0.,                 1.,  0.,                   0.,
+  sin(direction),  0.,  cos(direction),    0.,
+  0.,                 0.,  0.,                   1.;
+
+  model.block(0,4,4,4) = model.block(0,4,4,4) * rotation;
+
+  direction = (PI/180) * 15;
+  rotation <<
+  cos(direction),      sin(direction),  0.,  0.,
+  -sin(direction),     cos(direction),  0.,  0.,
+  0.,                     0.,                 1.,  0.,
+  0.,                     0.,                 0.,  1.;
+  model.block(0,4,4,4) = model.block(0,4,4,4) * rotation;
 
   //------------------------------------------
   // VIEW/CAMERA MATRIX
@@ -469,15 +483,23 @@ int main(void)
     // Initialize the OpenGL Program
     // A program controls the OpenGL pipeline and it must contains
     // at least a vertex shader and a fragment shader to be valid
+
+
+    // , color4 ambient = color4( 0.0, 0.0, 0.0, 1.0 )
+    // , color4 diffuse = color4( 1.0, 1.0, 1.0, 1.0 )
+    // , color4 specular = color4( 1.0, 1.0, 1.0, 1.0 )
+    // , float4 position = float4( 0.0, 0.0, 1.0, 0.0 )
+
     Program program;
     const GLchar* vertex_shader =
             "#version 150 core\n"
                     "in vec3 position;" //vertex position
                     "in vec3 normal;"
                     "in vec2 texCoord;"
-                    "out vec2 TexCoord;"
-                    "out vec3 Normal;"
-                    "out vec3 FragPos;"
+                    "out vec2 TexCoord;" //UV coordinates
+                    "out vec3 Normal;" // Normal
+                    "out vec3 FragPos;" //Position
+
                     "uniform mat4 view;"
                     "uniform mat4 projection;"
                     "uniform mat4 model;"
@@ -485,7 +507,7 @@ int main(void)
                     "{"
                     "    gl_Position = projection * view * model * vec4(position, 1.0);"
                     "    FragPos = vec3(model * vec4(position, 1.0f));"
-                    "    Normal = mat3(transpose(inverse(model))) * normal;"
+                    "    Normal =  mat3(transpose(inverse(model))) * normal;"
                     "    TexCoord = texCoord;"
                     "}";
     const GLchar* fragment_shader =
@@ -494,19 +516,32 @@ int main(void)
                     "in vec2 TexCoord;"
                     "in vec3 Normal;"
                     "in vec3 FragPos;"
-                    "uniform vec3 lightPos;"
                     "uniform vec3 viewPos;"
-                    "uniform vec3 objectColor;"
+                    "uniform vec3 lightPos;"
                     "uniform sampler2D ourTexture;"
-                    "uniform bool is_rose;"
+                    "uniform bool is_cat;"
                     "void main()"
                     "{"
-                          //ROSE
-                  "       if(is_rose){"
-                  "         outColor =  texture(ourTexture, TexCoord) ;"
-                          //DNA
-                  "       }else{"
-                  "           outColor =  texture(ourTexture, TexCoord);"
+                  "       float ambientStrength = 0.05f;"
+                  "       vec3 lightColor = vec3(1.0, 1.0, 1.0);"
+                  "       float lightPower = 10.0;"
+                  "       if(is_cat){" //CAT
+                  "           vec3 ambient = ambientStrength * lightColor;"
+                  "           vec3 norm = normalize(Normal);"
+                  "           vec3 lightDir = normalize(lightPos - FragPos);"
+                  "           float diff = max(dot(norm, lightDir), 0);"
+                  "           vec3 diffuse = diff * lightColor;"
+
+                  "           float specularStrength = 0.5f;"
+                  "           vec3 viewDir = normalize(viewPos - FragPos);"
+                  "           vec3 reflectDir = reflect(-lightDir, norm);  "
+                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
+                  "           vec3 specular = specularStrength * spec * lightColor;  "
+                  "           vec3 result = (ambient + diffuse + specular);"
+                  "           outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
+                  "       }else{" //TODO: DNA TEXTURE
+                  "         vec3 ambient = vec3(0.0, 0.0, 0.0);"
+                  "         outColor =  texture(ourTexture, TexCoord);"
                   "       }"
 
                   "}";
@@ -576,7 +611,7 @@ int main(void)
     // -------------------------
     // texture 2
     // ---------
-    cout << "Loading Rose texture" << endl;
+    cout << "Loading Cat texture" << endl;
     glGenTextures(1, &texture2);
     glBindTexture(GL_TEXTURE_2D, texture2);
     // Set our texture parameters
@@ -591,7 +626,7 @@ int main(void)
     nrChannels = 0;
     stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-    data = stbi_load("../data/rose_obj/rose_texture.jpg", &width, &height, &nrChannels, 0);
+    data = stbi_load("../data/cat_obj/Cat_texture.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -624,10 +659,8 @@ int main(void)
       //--------
       // DNA
       //--------
-      // bind textures on corresponding texture units
       // glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.block(0,0,4,4).data());
-      // glUniform3f(program.uniform("objectColor"), 0.364304, 0.534819, 0.863924);
-      // glUniform1i(program.uniform("is_rose"), false);
+      // glUniform1i(program.uniform("is_cat"), false);
       // glUniform1i(program.uniform("ourTexture"), 0);
       // glActiveTexture(GL_TEXTURE0);
       // glBindTexture(GL_TEXTURE_2D, texture1);
@@ -636,17 +669,16 @@ int main(void)
       // }
 
       //--------
-      // ROSE
+      // CAT
       //--------
       glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.block(0,4,4,4).data());
-      glUniform3f(program.uniform("objectColor"), 0.784314, 0.784314, 0.784314);
-      glUniform1i(program.uniform("is_rose"), true);
+      glUniform1i(program.uniform("is_cat"), true);
       glActiveTexture(GL_TEXTURE1);
       glBindTexture(GL_TEXTURE_2D, texture2);
       glUniform1i(program.uniform("ourTexture"), 1);
       // int start = dna_out_vertices.size();
       int start = 0;
-      for(int i = start; i <( start + rose_out_vertices.size()); i+=3){
+      for(int i = start; i <( start + cat_out_vertices.size()); i+=3){
           glDrawArrays(GL_TRIANGLES, i , 3);
       }
       // Swap front and back buffers
