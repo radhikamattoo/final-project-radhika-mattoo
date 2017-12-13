@@ -723,24 +723,24 @@ int main(void)
                   // "           vec3 D = Bu*A - Bv*B;"
                   // "           vec3 norm = normalize(Normal + D);"
                   // "           vec3 norm = normalize(Normal + (Bu * cross(Normal, OV) ) - (Bv * cross(Normal, OU)) );"
-                  // "           vec3 norm = normalize(Normal);"
+                  "           vec3 norm = normalize(Normal);"
                   //
-                  // "           vec3 lightDir = normalize(lightPos - FragPos);"
-                  // "           vec3 viewDir = normalize(viewPos - FragPos);"
-                  // "           vec3 reflectDir = reflect(-lightDir, norm);  "
-                  //             //AMBIENT
-                  // "           vec3 ambient = ambientStrength * lightColor * vec3(0.0, 0.0, 0.0);"
-                  //             //DIFFUSE
-                  // "           float diff = max(dot(norm, lightDir), 0);"
-                  // "           vec3 diffuse = diff * lightColor * vec3(0.364304, 0.534819, 0.863924);"
-                  //             //SPECULAR
-                  // "           float specularStrength = 0.5f;"
-                  // "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
-                  // "           vec3 specular = specularStrength * spec * lightColor * vec3(0.0, 0.0, 0.0);  "
-                  //             // TOTAL
-                  // "           vec3 result = (ambient + diffuse + specular);"
+                  "           vec3 lightDir = normalize(lightPos - FragPos);"
+                  "           vec3 viewDir = normalize(viewPos - FragPos);"
+                  "           vec3 reflectDir = reflect(-lightDir, norm);  "
+                              //AMBIENT
+                  "           vec3 ambient = ambientStrength * lightColor * vec3(0.0, 0.0, 0.0);"
+                              //DIFFUSE
+                  "           float diff = max(dot(norm, lightDir), 0);"
+                  "           vec3 diffuse = diff * lightColor ;"
+                              //SPECULAR
+                  "           float specularStrength = 0.5f;"
+                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
+                  "           vec3 specular = specularStrength * spec * lightColor ;  "
+                              // TOTAL
+                  "           vec3 result = (ambient + diffuse + specular);"
 
-                  "           outColor =  texture(ourTexture, TexCoord) ;"
+                  "           outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
                   "       }"
 
                   "}";
