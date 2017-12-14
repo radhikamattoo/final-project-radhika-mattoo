@@ -399,9 +399,9 @@ void initialize(GLFWwindow* window)
   readObjFile(filenames[0], false);
   readObjFile(filenames[1], true);
 
-  cout << "Nut vertices: " << dna_out_vertices.size() << endl;
-  cout << "Nut normals: " << dna_out_normals.size() << endl;
-  cout << "Nut textures: " << dna_out_uvs.size() << endl;
+  cout << "Pear vertices: " << dna_out_vertices.size() << endl;
+  cout << "Pear normals: " << dna_out_normals.size() << endl;
+  cout << "Pear textures: " << dna_out_uvs.size() << endl;
   for(int i = 0; i < dna_out_vertices.size(); i++)
   {
     Vector3f v_data = dna_out_vertices[i];
@@ -611,7 +611,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
           0.,    cos(direction),   sin(direction),  0.,
           0.,    -sin(direction),  cos(direction),  0.,
           0.,    0.,                  0.,                 1.;
-          model.block(0, 0, 4, 4) = model.block(0, 4, 4, 4) * rotation;
+          model.block(0, 4, 4, 4) = model.block(0, 4, 4, 4) * rotation;
         break;
       }
 
@@ -807,19 +807,12 @@ int main(void)
                   "           vec3 result = (ambient + diffuse + specular);"
                   "           outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
                   "       }else{"
-                  // "           float x_forward = texture(bump, TexCoord + vec2(OFF, 0.0)).x;"
-                  // "           float x_back = texture(bump, TexCoord - vec2(OFF,0.0) ).x;"
-                  // "           float y_forward = texture(bump, TexCoord + vec2(0.0, OFF) ).x;"
-                  // "           float y_back = texture(bump, TexCoord - vec2(0.0, OFF) ).x;"
-                  // "           float Bu = (x_forward - x_back)/(2.0 * OFF);"
-                  // "           float Bv = (y_back - y_forward)/ (2.0 * OFF);"
                   "           float Bu = dFdx(texture(bump, TexCoord).x);"
                   "           float Bv = dFdx(texture(bump, TexCoord).y);"
                   "           vec3 A = cross(Normal, OV);"
                   "           vec3 B = cross(Normal, OU);"
                   "           vec3 D = Bu*A - Bv*B;"
                   "           vec3 norm = normalize(Normal + D);"
-                  // "           vec3 norm = normalize(Normal);"
 
                   "           vec3 lightDir = normalize(lightPos - FragPos);"
                   "           vec3 viewDir = normalize(viewPos - FragPos);"
@@ -875,7 +868,7 @@ int main(void)
     // -------------------------
     // texture 1
     // ---------
-    cout << "Loading DNA texture" << endl;
+    cout << "Loading Pear texture/bump maps" << endl;
 
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
@@ -897,7 +890,7 @@ int main(void)
      }
      else
      {
-        std::cout << "Failed to load texture" << std::endl;
+        std::cout << "Failed to load Pear texture" << std::endl;
      }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -928,7 +921,7 @@ int main(void)
      }
      else
      {
-        std::cout << "Failed to load texture" << std::endl;
+        std::cout << "Failed to load Pear bump map" << std::endl;
      }
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -964,7 +957,7 @@ int main(void)
     }
     else
     {
-       std::cout << "Failed to load texture" << std::endl;
+       std::cout << "Failed to load Cat texture" << std::endl;
     }
 
     stbi_image_free(data);
