@@ -17,6 +17,7 @@
 
 // IO Stream
 #include <iostream>
+#include <fstream>
 
 #include <vector>
 
@@ -43,7 +44,7 @@ vector<string> filenames;
 //----------------------------------
 VertexBufferObject VBO_CAT;
 VertexBufferObject VBO_NUT;
-int NUT_VERTICES = 3168;
+int NUT_VERTICES = 8544;
 int CAT_VERTICES = 12000;
 int TOTAL = NUT_VERTICES + CAT_VERTICES;
 // int TOTAL = ROSE_VERTICES;
@@ -86,7 +87,7 @@ Vector3f eye(0.0, 0.0, focal_length); //camera position/ eye position  //e
 Vector3f look_at(0.0, 0.0, 0.0); //target point, where we want to look //g
 Vector3f up_vec(0.0, 1.0, 0.0); //up vector //t
 
-Vector3f lightPos(0.0, 0.0, 3.0);
+Vector3f lightPos(0.0, 1.0, focal_length);
 //----------------------------------
 // PERSPECTIVE PROJECTION MATRIX
 //----------------------------------
@@ -119,6 +120,7 @@ vector< Vector3f > dna_out_normals;
 vector< Vector3f > cat_out_vertices;
 vector< Vector2f > cat_out_uvs;
 vector< Vector3f > cat_out_normals;
+
 
 vector<float> split_face_line(string line, int startIdx)
 {
@@ -278,96 +280,102 @@ Vector3f getParams(Vector2f p, float coord1_x, float coord1_y, float coord2_x, f
 
 }
 
-// void calculateDerivatives()
-// {
-//   float epsilon = 0.01;
-//   for(int i = 0; i < dna_out_uvs.size(); i+=3)
-//   {
-//     int column = i;
-//     float coord_1_x = dna_out_uvs[column](0);
-//     float coord_1_y = dna_out_uvs[column](1);
-//
-//     float coord_2_x = dna_out_uvs[column + 1](0);
-//     float coord_2_y = dna_out_uvs[column + 1](1);
-//
-//     float coord_3_x = dna_out_uvs[column + 2](0);
-//     float coord_3_y = dna_out_uvs[column + 2](1);
-//
-//     // Get the 3 points
-//     Vector2f barycenter = calculateBarycenter(i);
-//     Vector2f p_u = barycenter + Vector2f(epsilon, 0.0);
-//     Vector2f p_v = barycenter + Vector2f(0.0, epsilon);
-//
-//     // Get alpha, beta, gamma for the 3 2D points
-//     Vector3f p_params = getParams(barycenter, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
-//     Vector3f p_u_params = getParams(barycenter, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
-//     Vector3f p_v_params = getParams(barycenter, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
-//
-//     Vector3f V_p = (p_params(0) * V.col(i)) + (p_params(1) * V.col(i + 1)) + (p_params(2) * V.col(i + 2));
-//     Vector3f V_u = (p_u_params(0) * V.col(i)) + (p_u_params(1) * V.col(i + 1)) + (p_u_params(2) * V.col(i + 2));
-//     Vector3f V_v = (p_v_params(0) * V.col(i)) + (p_v_params(1) * V.col(i + 1)) + (p_v_params(2) * V.col(i + 2));
-//
-//     Vector3f O_u = (V_u - V_p).normalized();
-//     Vector3f O_v = (V_v - V_p).normalized();
-//
-//     // Save values
-//     dna_faces_ou.col(i) << O_u;
-//     dna_faces_ou.col(i + 1) << O_u;
-//     dna_faces_ou.col(i + 2) << O_u;
-//     dna_vertices_ou.col(i) << O_u;
-//     dna_vertices_ou.col(i + 1) << O_u;
-//     dna_vertices_ou.col(i + 2) << O_u;
-//
-//     dna_faces_ov.col(i) << O_v;
-//     dna_faces_ov.col(i + 1) << O_v;
-//     dna_faces_ov.col(i + 2) << O_v;
-//     dna_vertices_ov.col(i) << O_v;
-//     dna_vertices_ov.col(i + 1) << O_v;
-//     dna_vertices_ov.col(i + 2) << O_v;
-//   }
-//   cout << "Done calculating face normals, calculating vertex normals" << endl;
-//   for(int i = 0; i < dna_out_uvs.size(); i++)
-//   {
-//     cout << "At index: " << i << endl;
-//     vector<int> summed_ov;
-//     vector<int> summed_ou;
-//     Vector2f current = dna_out_uvs[i];
-//     Vector3f sum_ou = dna_vertices_ou.col(i);
-//     Vector3f sum_ov = dna_vertices_ov.col(i);
-//     for(int j = 0; j < dna_out_uvs.size(); i++){
-//       if(!isInVector(summed_ou, j)){
-//         Vector2f other = dna_out_uvs[j];
-//         if(other[0] == current[0] && other[1] == current[1] ){
-//           sum_ou += dna_vertices_ou.col(j);
-//           summed_ou.push_back(j);
-//         }
-//       }
-//       if(!isInVector(summed_ov, j)){
-//         Vector2f other = dna_out_uvs[j];
-//         if(other[0] == current[0] && other[1] == current[1] ){
-//           sum_ov += dna_vertices_ov.col(j);
-//           summed_ov.push_back(j);
-//         }
-//       }
-//     }
-//     // normalize sums and insert into all vertex columns
-//     sum_ou = sum_ou.normalized();
-//     for(int k = 0; k < summed_ou.size(); k++){
-//       int idx = summed_ou[k];
-//       dna_vertices_ou.col(idx) = sum_ou;
-//     }
-//     sum_ov = sum_ov.normalized();
-//     for(int k = 0; k < summed_ov.size(); k++){
-//       int idx = summed_ov[k];
-//       dna_vertices_ov.col(idx) = sum_ov;
-//     }
-//
-//   } //end outer loop
-//
-//   cout << "Done calculating vertex normals" << endl;
-//   VBO_OU.update(dna_vertices_ou);
-  // VBO_OV.update(dna_vertices_ov);
-// }
+void calculateDerivatives()
+{
+  float epsilon = 0.1;
+  for(int i = 0; i < dna_out_uvs.size(); i+=3)
+  {
+    int column = i;
+    float coord_1_x = dna_out_uvs[column](0);
+    float coord_1_y = dna_out_uvs[column](1);
+
+    float coord_2_x = dna_out_uvs[column + 1](0);
+    float coord_2_y = dna_out_uvs[column + 1](1);
+
+    float coord_3_x = dna_out_uvs[column + 2](0);
+    float coord_3_y = dna_out_uvs[column + 2](1);
+
+    // Get the 3 points
+    Vector2f barycenter = calculateBarycenter(i);
+    Vector2f p_u = barycenter + Vector2f(epsilon, 0.0);
+    Vector2f p_v = barycenter + Vector2f(0.0, epsilon);
+
+
+    // Get alpha, beta, gamma for the 3 2D points
+    Vector3f p_params = getParams(barycenter, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
+    Vector3f p_u_params = getParams(p_u, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
+    Vector3f p_v_params = getParams(p_v, coord_1_x, coord_1_y,  coord_2_x, coord_2_y,  coord_3_x, coord_3_y);
+
+    Vector3f V_p = (p_params(0) * V_NUT.col(i)) + (p_params(1) * V_NUT.col(i + 1)) + (p_params(2) * V_NUT.col(i + 2));
+    Vector3f V_u = (p_u_params(0) * V_NUT.col(i)) + (p_u_params(1) * V_NUT.col(i + 1)) + (p_u_params(2) * V_NUT.col(i + 2));
+    Vector3f V_v = (p_v_params(0) * V_NUT.col(i)) + (p_v_params(1) * V_NUT.col(i + 1)) + (p_v_params(2) * V_NUT.col(i + 2));
+    Vector3f O_u = (V_u - V_p).normalized();
+    Vector3f O_v = (V_v - V_p).normalized();
+
+    // Save values
+    dna_faces_ou.col(i) << O_u;
+    dna_faces_ou.col(i + 1) << O_u;
+    dna_faces_ou.col(i + 2) << O_u;
+    dna_vertices_ou.col(i) << O_u;
+    dna_vertices_ou.col(i + 1) << O_u;
+    dna_vertices_ou.col(i + 2) << O_u;
+
+    dna_faces_ov.col(i) << O_v;
+    dna_faces_ov.col(i + 1) << O_v;
+    dna_faces_ov.col(i + 2) << O_v;
+    dna_vertices_ov.col(i) << O_v;
+    dna_vertices_ov.col(i + 1) << O_v;
+    dna_vertices_ov.col(i + 2) << O_v;
+  }
+  cout << "Done with faces, doing vertices" << endl;
+  // Iterate through all 3d vertices and sum partial derivatives
+  for(int i = 0; i < dna_out_vertices.size(); i++)
+  {
+    vector<int> summed_ov;
+    vector<int> summed_ou;
+    Vector3f current = dna_out_vertices[i];
+    Vector3f sum_ou = dna_vertices_ou.col(i);
+    Vector3f sum_ov = dna_vertices_ov.col(i);
+
+    summed_ov.push_back(i);
+    summed_ou.push_back(i);
+    for(int j = 0; j < dna_out_vertices.size(); j++){
+      if(i == j) continue;
+      if(!isInVector(summed_ou, j)){
+        Vector3f other = dna_out_vertices[j];
+        if(other[0] == current[0] && other[1] == current[1] && other[2] == current[2] ){
+          sum_ou += dna_vertices_ou.col(j);
+          summed_ou.push_back(j);
+        }
+      }
+      if(!isInVector(summed_ov, j)){
+        Vector3f other = dna_out_vertices[j];
+        if(other[0] == current[0] && other[1] == current[1] && other[2] == current[2]){
+          sum_ov += dna_vertices_ov.col(j);
+          summed_ov.push_back(j);
+        }
+      }
+    }
+    // normalize sums and insert into all vertex columns
+    sum_ou = sum_ou.normalized();
+    for(int k = 0; k < summed_ou.size(); k++){
+      int idx = summed_ou[k];
+      dna_vertices_ou.col(idx) = sum_ou;
+    }
+    sum_ov = sum_ov.normalized();
+    for(int k = 0; k < summed_ov.size(); k++){
+      int idx = summed_ov[k];
+      dna_vertices_ov.col(idx) = sum_ov;
+    }
+    if((i % 1000) == 0){
+      cout << "At index: " << i << "/8544" << endl;
+    }
+
+  } //end outer loop
+
+  VBO_OU.update(dna_vertices_ou);
+  VBO_OV.update(dna_vertices_ov);
+}
 
 void initialize(GLFWwindow* window)
 {
@@ -386,7 +394,7 @@ void initialize(GLFWwindow* window)
   VBO_OU.init();
 
   // READ IN OBJ FILES
-  filenames.push_back("../data/hazelnut_obj/hazelnut_tri.obj");
+  filenames.push_back("../data/pear_obj/pear_tri.obj");
   filenames.push_back("../data/cat_obj/Cat.obj");
   readObjFile(filenames[0], false);
   readObjFile(filenames[1], true);
@@ -399,22 +407,25 @@ void initialize(GLFWwindow* window)
     Vector3f v_data = dna_out_vertices[i];
     Vector3f n_data = dna_out_normals[i];
     Vector2f t_data = dna_out_uvs[i];
-    // v_data /= 30;
     v_data[0] -= 3;
+    v_data[2] -= 0.5;
     V_NUT.col(i) << v_data[0], v_data[1], v_data[2];
     N_NUT.col(i) << n_data[0], n_data[1], n_data[2];
     T_NUT.col(i) << t_data[0], t_data[1];
   }
+  calculateDerivatives();
 
   cout << "Cat vertices: " << cat_out_vertices.size() << endl;
   cout << "Cat normals: " << cat_out_normals.size() << endl;
   cout << "Cat textures: " << cat_out_uvs.size() << endl;
+
   for(int i = 0; i < cat_out_vertices.size(); i++)
   {
     Vector3f v_data = cat_out_vertices[i];
     Vector3f n_data = cat_out_normals[i];
     Vector2f t_data = cat_out_uvs[i];
     v_data /= 100;
+    v_data[2] -= 2;
     V_CAT.col(i) << v_data[0], v_data[1], v_data[2];
     N_CAT.col(i) << n_data[0], n_data[1], n_data[2];
     T_CAT.col(i) << t_data[0], t_data[1];
@@ -559,8 +570,90 @@ void changeView(int direction)
 
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+  float direction = (PI/180) * 20;
+  MatrixXf rotation(4,4);
   if(action == GLFW_RELEASE){
     switch(key){
+      // ROTATE CAT
+      // rotate
+      case GLFW_KEY_1:{
+        rotation <<
+          cos(direction),  0.,  -sin(direction),   0.,
+          0.,                 1.,  0.,                   0.,
+          sin(direction),  0.,  cos(direction),    0.,
+          0.,                 0.,  0.,                   1.;
+          model.block(0, 4, 4, 4) = model.block(0, 4, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_2:{
+        direction = - direction;
+        rotation <<
+          cos(direction),  0.,  -sin(direction),   0.,
+          0.,                 1.,  0.,                   0.,
+          sin(direction),  0.,  cos(direction),    0.,
+          0.,                 0.,  0.,                   1.;
+          model.block(0, 4, 4, 4) = model.block(0, 4, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_3:{
+        rotation <<
+          1.,    0.,                  0.,                 0.,
+          0.,    cos(direction),   sin(direction),  0.,
+          0.,    -sin(direction),  cos(direction),  0.,
+          0.,    0.,                  0.,                 1.;
+          model.block(0, 4, 4, 4) = model.block(0, 4, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_4:{
+        direction = -direction;
+        rotation <<
+          1.,    0.,                  0.,                 0.,
+          0.,    cos(direction),   sin(direction),  0.,
+          0.,    -sin(direction),  cos(direction),  0.,
+          0.,    0.,                  0.,                 1.;
+          model.block(0, 0, 4, 4) = model.block(0, 4, 4, 4) * rotation;
+        break;
+      }
+
+      // NUT
+      case GLFW_KEY_5:{
+        rotation <<
+          cos(direction),  0.,  -sin(direction),   0.,
+          0.,                 1.,  0.,                   0.,
+          sin(direction),  0.,  cos(direction),    0.,
+          0.,                 0.,  0.,                   1.;
+          model.block(0, 0, 4, 4) = model.block(0, 0, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_6:{
+        direction = - direction;
+        rotation <<
+          cos(direction),  0.,  -sin(direction),   0.,
+          0.,                 1.,  0.,                   0.,
+          sin(direction),  0.,  cos(direction),    0.,
+          0.,                 0.,  0.,                   1.;
+          model.block(0, 0, 4, 4) = model.block(0, 0, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_7:{
+        rotation <<
+          1.,    0.,                  0.,                 0.,
+          0.,    cos(direction),   sin(direction),  0.,
+          0.,    -sin(direction),  cos(direction),  0.,
+          0.,    0.,                  0.,                 1.;
+          model.block(0, 0, 4, 4) = model.block(0, 0, 4, 4) * rotation;
+        break;
+      }
+      case GLFW_KEY_8:{
+        direction = -direction;
+        rotation <<
+          1.,    0.,                  0.,                 0.,
+          0.,    cos(direction),   sin(direction),  0.,
+          0.,    -sin(direction),  cos(direction),  0.,
+          0.,    0.,                  0.,                 1.;
+          model.block(0, 0, 4, 4) = model.block(0, 0, 4, 4) * rotation;
+        break;
+      }
       case GLFW_KEY_LEFT:{
         cout << "Moving LEFT" << endl;
         changeView(0);
@@ -591,9 +684,11 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
         changeView(5);
         break;
       }
+
     }
   }
 }
+
 int main(void)
 {
     GLFWwindow* window;
@@ -706,41 +801,43 @@ int main(void)
                   "           vec3 diffuse = diff * lightColor;"
                               //SPECULAR
                   "           float specularStrength = 0.5f;"
-                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
+                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 100);"
                   "           vec3 specular = specularStrength * spec * lightColor;  "
                               // TOTAL
                   "           vec3 result = (ambient + diffuse + specular);"
                   "           outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
                   "       }else{"
-                  // "           float x_forward = texture(ourTexture, TexCoord + vec2(OFF, 0.0)).x;"
-                  // "           float x_back = texture(ourTexture, TexCoord - vec2(OFF,0.0) ).x;"
-                  // "           float y_forward = texture(ourTexture, TexCoord + vec2(0.0, OFF) ).x;"
-                  // "           float y_back = texture(ourTexture, TexCoord - vec2(0.0, OFF) ).x;"
+                  // "           float x_forward = texture(bump, TexCoord + vec2(OFF, 0.0)).x;"
+                  // "           float x_back = texture(bump, TexCoord - vec2(OFF,0.0) ).x;"
+                  // "           float y_forward = texture(bump, TexCoord + vec2(0.0, OFF) ).x;"
+                  // "           float y_back = texture(bump, TexCoord - vec2(0.0, OFF) ).x;"
                   // "           float Bu = (x_forward - x_back)/(2.0 * OFF);"
                   // "           float Bv = (y_back - y_forward)/ (2.0 * OFF);"
-                  // "           vec3 A = cross(Normal, OV);"
-                  // "           vec3 B = cross(Normal, OU);"
-                  // "           vec3 D = Bu*A - Bv*B;"
-                  // "           vec3 norm = normalize(Normal + D);"
-                  // "           vec3 norm = normalize(Normal + (Bu * cross(Normal, OV) ) - (Bv * cross(Normal, OU)) );"
-                  "           vec3 norm = normalize(Normal);"
-                  //
+                  "           float Bu = dFdx(texture(bump, TexCoord).x);"
+                  "           float Bv = dFdx(texture(bump, TexCoord).y);"
+                  "           vec3 A = cross(Normal, OV);"
+                  "           vec3 B = cross(Normal, OU);"
+                  "           vec3 D = Bu*A - Bv*B;"
+                  "           vec3 norm = normalize(Normal + D);"
+                  // "           vec3 norm = normalize(Normal);"
+
                   "           vec3 lightDir = normalize(lightPos - FragPos);"
                   "           vec3 viewDir = normalize(viewPos - FragPos);"
                   "           vec3 reflectDir = reflect(-lightDir, norm);  "
                               //AMBIENT
-                  "           vec3 ambient = ambientStrength * lightColor * vec3(0.0, 0.0, 0.0);"
+                  "           vec3 ambient = ambientStrength * lightColor ;"
                               //DIFFUSE
                   "           float diff = max(dot(norm, lightDir), 0);"
-                  "           vec3 diffuse = diff * lightColor ;"
+                  "           vec3 diffuse = diff * lightColor;"
                               //SPECULAR
                   "           float specularStrength = 0.5f;"
-                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);"
-                  "           vec3 specular = specularStrength * spec * lightColor ;  "
+                  "           float spec = pow(max(dot(viewDir, reflectDir), 0.0), 96);"
+                  "           vec3 specular = specularStrength * spec * lightColor * vec3(0.500000, 0.500000 ,0.500000);;  "
                               // TOTAL
                   "           vec3 result = (ambient + diffuse + specular);"
 
-                  "           outColor =  texture(ourTexture, TexCoord) * vec4(result, 1.0);"
+                  "           outColor = texture(ourTexture, TexCoord) * vec4(result, 1.0);"
+
                   "       }"
 
                   "}";
@@ -758,8 +855,8 @@ int main(void)
     // The following line connects the VBO we defined above with the position "slot"
     // in the vertex shader
 
-    // program.bindVertexAttribArray("ov_in", VBO_OV);
-    // program.bindVertexAttribArray("ou_in", VBO_OU);
+    program.bindVertexAttribArray("ov_in", VBO_OV);
+    program.bindVertexAttribArray("ou_in", VBO_OU);
 
     // UNIFORMS
     glUniform3f(program.uniform("lightPos"), lightPos[0] ,lightPos[1], lightPos[2]);
@@ -778,9 +875,7 @@ int main(void)
     // -------------------------
     // texture 1
     // ---------
-    cout << "Loading Nut texture" << endl;
-
-
+    cout << "Loading DNA texture" << endl;
 
     glGenTextures(1, &texture1);
     glBindTexture(GL_TEXTURE_2D, texture1); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
@@ -794,7 +889,7 @@ int main(void)
      int width, height, nrChannels;
      stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
      // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
-     unsigned char *data = stbi_load("../data/hazelnut_obj/hazelnut_texture.tga", &width, &height, &nrChannels, 0);
+     unsigned char *data = stbi_load("../data/pear_obj/pear_texture.jpg", &width, &height, &nrChannels, 0);
      if (data)
      {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -808,6 +903,38 @@ int main(void)
     glGenerateMipmap(GL_TEXTURE_2D);
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0); // Unbind texture when done, so we won't accidentily mess up our texture.
+
+
+
+    glGenTextures(1, &texture3);
+    glBindTexture(GL_TEXTURE_2D, texture3); // All upcoming GL_TEXTURE_2D operations now have effect on our texture object
+    // Set our texture parameters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// Set texture wrapping to GL_REPEAT
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // Set texture filtering
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    // load image, create texture and generate mipmaps
+    width = 0;
+    height = 0;
+    nrChannels = 0;
+    stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+     // The FileSystem::getPath(...) is part of the GitHub repository so we can find files on any IDE/platform; replace it with your own image path.
+     data  = stbi_load("../data/hazelnut_obj/carpet_noise.jpeg", &width, &height, &nrChannels, 0);
+     if (data)
+     {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+     }
+     else
+     {
+        std::cout << "Failed to load texture" << std::endl;
+     }
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    stbi_image_free(data);
+    glBindTexture(GL_TEXTURE_2D, 2); // Unbind texture when done, so we won't accidentily mess up our texture.
+
 
 
     // -------------------------
@@ -866,11 +993,16 @@ int main(void)
       program.bindVertexAttribArray("position",VBO_NUT);
       program.bindVertexAttribArray("normal",VBO_N_NUT);
       program.bindVertexAttribArray("texCoord",VBO_T_NUT);
+
       glUniformMatrix4fv(program.uniform("model"), 1, GL_FALSE, model.block(0,0,4,4).data());
       glUniform1i(program.uniform("is_cat"), false);
       glUniform1i(program.uniform("ourTexture"), 0);
+      glUniform1i(program.uniform("bump"), 2);
+
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, texture1);
+      glBindTexture(GL_TEXTURE_2D, texture1); //texture
+      glActiveTexture(GL_TEXTURE2);
+      glBindTexture(GL_TEXTURE_2D, texture3); //height map
       for(int i = 0; i < dna_out_vertices.size(); i+=3){
         glDrawArrays(GL_TRIANGLES, i , 3);
       }
@@ -885,7 +1017,7 @@ int main(void)
       glUniform1i(program.uniform("is_cat"), true);
       glUniform1i(program.uniform("ourTexture"), 1);
       glActiveTexture(GL_TEXTURE1);
-      glBindTexture(GL_TEXTURE_2D, texture2);
+      glBindTexture(GL_TEXTURE_2D, texture2); // cat texture
       for(int i = 0; i < cat_out_vertices.size(); i+=3){
           glDrawArrays(GL_TRIANGLES, i , 3);
       }
