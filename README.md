@@ -1,15 +1,19 @@
 # Computer Graphics Final Project
 
+[![Build Status](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo.svg?token=DKU6y6MTDpMMtsxTr53h&branch=master)](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo)
+
 Radhika Mattoo, rm3485@nyu.edu
 
+# Overview
+
+This project uses OpenGL to render meshes with texture and bump mapping for a more realistic scene. The meshes used were found for free on  [TurboSquid](http://www.turbosquid.com).
 
 
-[![Build Status](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo.svg?token=DKU6y6MTDpMMtsxTr53h&branch=master)](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo)
 
 # Instructions
 
-* `git clone --recursive https://github.com/NYUCG2017/assignment-4-radhikamattoo.git`
-* `cd assignment-4-radhikamattoo`
+* `git clone --recursive https://github.com/radhikamattoo/texture-and-bump-mapping.git`
+* `cd texture-and-bump-mapping`
 * `mkdir build`
 * `cd build`
 * `cmake ../`
