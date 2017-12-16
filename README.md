@@ -1,6 +1,6 @@
 # Computer Graphics Final Project
 
-[![Build Status](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo.svg?token=DKU6y6MTDpMMtsxTr53h&branch=master)](https://travis-ci.com/NYUCG2017/assignment-4-radhikamattoo)
+[![Build Status](https://travis-ci.org/radhikamattoo/texture-and-bump-mapping.svg?branch=master)](https://travis-ci.org/radhikamattoo/texture-and-bump-mapping)
 
 Radhika Mattoo, rm3485@nyu.edu
 
